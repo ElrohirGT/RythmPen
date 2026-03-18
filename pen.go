@@ -47,4 +47,5 @@ func (p Pen) Draw(parent *ebiten.Image, opt *ebiten.DrawImageOptions) {
 		opt.GeoM.Translate(p.DownPosition.X, p.DownPosition.Y)
 	}
 	parent.DrawImage(p.Image, opt)
+	opt.GeoM.Reset()
 }

@@ -1,11 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 type Beat struct {
@@ -40,5 +38,36 @@ func (b *Beat) Update() bool {
 func (b Beat) Draw(parent *ebiten.Image, opt *ebiten.DrawImageOptions) {
 	opt.GeoM.Translate(b.CurrentPos.X, b.CurrentPos.Y)
 	parent.DrawImage(b.Image, opt)
-	ebitenutil.DebugPrint(parent, fmt.Sprintf("%f %f", b.CurrentPos.X, b.CurrentPos.Y))
+	// ebitenutil.DebugPrint(parent, fmt.Sprintf("%f %f", b.CurrentPos.X, b.CurrentPos.Y))
+}
+
+type BeatManager struct {
+	beats []*Beat
+}
+
+func NewBeatManager() *BeatManager {
+	return &BeatManager{
+		beats: make([]*Beat, 0, 50),
+	}
+}
+
+func (manager *BeatManager) Update() {
+	for i := 0; i < len(manager.beats); i++ {
+		b := manager.beats[i]
+		if shouldRemove := b.Update(); shouldRemove {
+			manager.beats = SlicesRemoveWithoutOrder(manager.beats, i)
+			i--
+		}
+	}
+}
+
+func (manager *BeatManager) Draw(parent *ebiten.Image, opt *ebiten.DrawImageOptions) {
+	for _, b := range manager.beats {
+		b.Draw(parent, opt)
+		opt.GeoM.Reset()
+	}
+}
+
+func (manager *BeatManager) AddBeat(beat *Beat) {
+	manager.beats = append(manager.beats, beat)
 }

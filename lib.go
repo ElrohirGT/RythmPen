@@ -1,6 +1,10 @@
 package main
 
-import "math"
+import (
+	"math"
+
+	"github.com/hajimehoshi/ebiten/v2"
+)
 
 type Vec2 struct {
 	X float64
@@ -16,6 +20,10 @@ func Vec2Lerp(start, end Vec2, t float64) Vec2 {
 		Float64Lerp(start.X, end.X, t),
 		Float64Lerp(start.Y, end.Y, t),
 	)
+}
+
+func (v Vec2) Vec2TranslateGeom(opt *ebiten.DrawImageOptions) {
+	opt.GeoM.Translate(v.X, v.Y)
 }
 
 func Float64Lerp(start, end, t float64) float64 {
