@@ -4,6 +4,7 @@ import (
 	"image/color"
 	"time"
 
+	rythmpen "github.com/ElrohirGT/RythmPen"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -11,12 +12,12 @@ var LeftColor = color.RGBA{R: 255, G: 0, B: 0, A: 255}
 var RightColor = color.RGBA{R: 0, G: 0, B: 255, A: 255}
 
 type Game struct {
-	leftPen     *Pen
-	rightPen    *Pen
-	beatManager *BeatManager
+	leftPen     *rythmpen.Pen
+	rightPen    *rythmpen.Pen
+	beatManager *rythmpen.BeatManager
 
-	debugManager *DebugImageManager
-	audioManager *AudioManager
+	debugManager *rythmpen.DebugImageManager
+	audioManager *rythmpen.AudioManager
 }
 
 func (g *Game) Update() error {
@@ -55,7 +56,7 @@ func main() {
 	ebiten.SetWindowSize(int(WindowWidth), ComputeDiscreteHeight(WindowHeightWidthRatio, WindowWidth))
 	ebiten.SetWindowTitle("RythmPen")
 
-	debugManager := NewDebugImageManager(ebiten.KeyB)
+	debugManager := rythmpen.NewDebugImageManager(ebiten.KeyB)
 
 	leftPenImg := ebiten.NewImage(50, 100)
 	leftPenImg.Fill(LeftColor)
@@ -70,33 +71,33 @@ func main() {
 	xCenter := WindowWidth / 2
 	xPenCenterDelta := WindowWidth / 8
 	leftX := float64(xCenter - xPenCenterDelta)
-	leftPen := NewPen(
+	leftPen := rythmpen.NewPen(
 		leftPenImg,
-		NewVec2(leftX, yPenStart),
-		NewVec2(leftX, yPenEnd),
+		rythmpen.NewVec2(leftX, yPenStart),
+		rythmpen.NewVec2(leftX, yPenEnd),
 		ebiten.KeyF,
 	)
 
 	rightX := float64(xCenter + xPenCenterDelta)
-	rightPen := NewPen(
+	rightPen := rythmpen.NewPen(
 		rightPenImg,
-		NewVec2(rightX, yPenStart),
-		NewVec2(rightX, yPenEnd),
+		rythmpen.NewVec2(rightX, yPenStart),
+		rythmpen.NewVec2(rightX, yPenEnd),
 		ebiten.KeyJ,
 	)
 
 	beatWidth := 50
 	beatHeight := 20
 
-	rightBeatStart := NewVec2(WindowWidth, yPenEnd+100)
-	rightBeatEnd := NewVec2(rightX, yPenEnd+100)
+	rightBeatStart := rythmpen.NewVec2(WindowWidth, yPenEnd+100)
+	rightBeatEnd := rythmpen.NewVec2(rightX, yPenEnd+100)
 
-	leftBeatStart := NewVec2(-float64(beatWidth), yPenEnd+100)
-	leftBeatEnd := NewVec2(leftX, yPenEnd+100)
+	leftBeatStart := rythmpen.NewVec2(-float64(beatWidth), yPenEnd+100)
+	leftBeatEnd := rythmpen.NewVec2(leftX, yPenEnd+100)
 
 	rightBeatImage := ebiten.NewImage(beatWidth, beatHeight)
 	rightBeatImage.Fill(RightColor)
-	rightBeat := NewBeat(
+	rightBeat := rythmpen.NewBeat(
 		rightBeatImage,
 		rightBeatStart,
 		rightBeatEnd,
@@ -105,27 +106,27 @@ func main() {
 
 	leftBeatImage := ebiten.NewImage(beatWidth, beatHeight)
 	leftBeatImage.Fill(LeftColor)
-	leftBeat := NewBeat(
+	leftBeat := rythmpen.NewBeat(
 		leftBeatImage,
 		leftBeatStart,
 		leftBeatEnd,
 		2*time.Second,
 	)
 
-	debugManager.Add(NewDebugImage(rightBeatStart))
-	debugManager.Add(NewDebugImage(rightBeatEnd))
+	debugManager.Add(rythmpen.NewDebugImage(rightBeatStart))
+	debugManager.Add(rythmpen.NewDebugImage(rightBeatEnd))
 
-	debugManager.Add(NewDebugImage(leftBeatStart))
-	debugManager.Add(NewDebugImage(leftBeatEnd))
+	debugManager.Add(rythmpen.NewDebugImage(leftBeatStart))
+	debugManager.Add(rythmpen.NewDebugImage(leftBeatEnd))
 
-	beatManager := NewBeatManager(
-		BeatConfig{
+	beatManager := rythmpen.NewBeatManager(
+		rythmpen.BeatConfig{
 			Image:    leftBeatImage,
 			Start:    leftBeatStart,
 			End:      leftBeatEnd,
 			LifeSpan: 3 * time.Second,
 		},
-		BeatConfig{
+		rythmpen.BeatConfig{
 			Image:    rightBeatImage,
 			Start:    rightBeatStart,
 			End:      rightBeatEnd,
@@ -138,7 +139,7 @@ func main() {
 	beatManager.AddRightBeat()
 	beatManager.AddRightBeat()
 
-	audioManager := NewAudioManager(44100)
+	audioManager := rythmpen.NewAudioManager(44100)
 
 	game := &Game{
 		leftPen:      leftPen,
