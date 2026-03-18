@@ -6,10 +6,14 @@ import (
 
 type AudioManager struct {
 	context *audio.Context
+	player  *audio.Player
 }
 
 func NewAudioManager(sampleRate int) *AudioManager {
+	ctx := audio.NewContext(sampleRate)
 	return &AudioManager{
-		context: audio.NewContext(sampleRate),
+		context: ctx,
+		// TODO: Create audio player
+		// player: ctx.NewPlayerF32("")
 	}
 }
