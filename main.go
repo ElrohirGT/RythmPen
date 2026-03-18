@@ -11,8 +11,6 @@ var LeftColor = color.RGBA{R: 255, G: 0, B: 0, A: 255}
 var RightColor = color.RGBA{R: 0, G: 0, B: 255, A: 255}
 
 type Game struct {
-	enableDebug bool
-
 	leftPen     *Pen
 	rightPen    *Pen
 	beatManager *BeatManager
