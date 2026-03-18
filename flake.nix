@@ -35,7 +35,7 @@
         LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath nativeBuildInputs;
 
         shellHook = ''
-               export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+          export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
           export PKG_CONFIG_PATH=${pkgs.alsa-lib.dev}/lib/pkgconfig:
         '';
       };
