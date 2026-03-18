@@ -1,15 +1,33 @@
 package main
 
 import (
+	"flag"
 	"image/color"
+	"log"
+	"os"
 	"time"
 
 	rythmpen "github.com/ElrohirGT/RythmPen"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/audio/mp3"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 var LeftColor = color.RGBA{R: 255, G: 0, B: 0, A: 255}
 var RightColor = color.RGBA{R: 0, G: 0, B: 255, A: 255}
+
+type Parameters struct {
+	AudioSrc string
+	MapDst   string
+}
+
+var Params Parameters
+
+func ParseParams() {
+	flag.StringVar(&Params.AudioSrc, "src", "source.mp3", "The audio source for the music")
+	flag.StringVar(&Params.MapDst, "dst", "song.map", "The destination file for the recorded map")
+	flag.Parse()
+}
 
 type Game struct {
 	leftPen     *rythmpen.Pen
@@ -18,6 +36,8 @@ type Game struct {
 
 	debugManager *rythmpen.DebugImageManager
 	audioManager *rythmpen.AudioManager
+
+	recorder *rythmpen.SongMap
 }
 
 func (g *Game) Update() error {
@@ -26,6 +46,21 @@ func (g *Game) Update() error {
 
 	g.beatManager.Update()
 	g.debugManager.Update()
+
+	leftJustPressed := inpututil.IsKeyJustPressed(g.leftPen.ActivationKey)
+	rightJustPressed := inpututil.IsKeyJustPressed(g.rightPen.ActivationKey)
+
+	if leftJustPressed && rightJustPressed {
+		g.recorder.BothBeat()
+	} else if leftJustPressed {
+		g.recorder.LeftBeat()
+	} else if rightJustPressed {
+		g.recorder.RightBeat()
+	}
+
+	if ebiten.IsWindowBeingClosed() {
+		SaveIntoFile(Params.MapDst, g.recorder)
+	}
 
 	return nil
 }
@@ -53,6 +88,8 @@ func ComputeDiscreteHeight(heightWidthRatio float64, width float64) int {
 }
 
 func main() {
+	ParseParams()
+
 	ebiten.SetWindowSize(int(WindowWidth), ComputeDiscreteHeight(WindowHeightWidthRatio, WindowWidth))
 	ebiten.SetWindowTitle("RythmPen")
 
@@ -97,21 +134,9 @@ func main() {
 
 	rightBeatImage := ebiten.NewImage(beatWidth, beatHeight)
 	rightBeatImage.Fill(RightColor)
-	rightBeat := rythmpen.NewBeat(
-		rightBeatImage,
-		rightBeatStart,
-		rightBeatEnd,
-		2*time.Second,
-	)
 
 	leftBeatImage := ebiten.NewImage(beatWidth, beatHeight)
 	leftBeatImage.Fill(LeftColor)
-	leftBeat := rythmpen.NewBeat(
-		leftBeatImage,
-		leftBeatStart,
-		leftBeatEnd,
-		2*time.Second,
-	)
 
 	debugManager.Add(rythmpen.NewDebugImage(rightBeatStart))
 	debugManager.Add(rythmpen.NewDebugImage(rightBeatEnd))
@@ -133,13 +158,27 @@ func main() {
 			LifeSpan: 3 * time.Second,
 		},
 	)
-	beatManager.AddBeat(leftBeat)
-	beatManager.AddBeat(rightBeat)
 
-	beatManager.AddRightBeat()
-	beatManager.AddRightBeat()
+	const SampleRate = 44100
+	audioManager := rythmpen.NewAudioManager(SampleRate)
+	audioSrc, err := os.Open(Params.AudioSrc)
+	if err != nil {
+		log.Panicf("%s\nFailed to create reader from file!\n", err)
+	}
+	defer audioSrc.Close()
 
-	audioManager := rythmpen.NewAudioManager(44100)
+	mp3Stream, err := mp3.DecodeWithSampleRate(SampleRate, audioSrc)
+	if err != nil {
+		log.Panicf("%s\nFailed to decode mp3!\n", err)
+	}
+
+	err = audioManager.NewAudioPlayer(mp3Stream)
+	if err != nil {
+		log.Panicf("%s\nFailed to create audio player!\n", err)
+	}
+
+	audioManager.Play()
+	mapRecorder := rythmpen.NewSongMap(audioManager)
 
 	game := &Game{
 		leftPen:      leftPen,
@@ -147,8 +186,24 @@ func main() {
 		beatManager:  beatManager,
 		debugManager: debugManager,
 		audioManager: audioManager,
+		recorder:     mapRecorder,
 	}
 	if err := ebiten.RunGame(game); err != nil {
 		panic(err)
 	}
+}
+
+func SaveIntoFile(filePath string, record *rythmpen.SongMap) {
+	dst, err := os.Create(filePath)
+	if err != nil {
+		log.Panicf("%s\nFailed to open file to write song map!", err)
+	}
+	defer dst.Close()
+
+	err = record.WriteToFile(dst)
+	if err != nil {
+		log.Panicf("%s\nFailed to write song map!", err)
+	}
+
+	log.Println("File saved!")
 }

@@ -1,6 +1,7 @@
 package rythmpen
 
 import (
+	"log"
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -41,4 +42,28 @@ func SlicesRemoveWithoutOrder[T any](slice []T, idx int) []T {
 	} else {
 		return slice
 	}
+}
+
+type Optional[T any] struct {
+	value   T
+	isValid bool
+}
+
+func NewOptionalValue[T any](obj T) Optional[T] {
+	return Optional[T]{
+		value:   obj,
+		isValid: true,
+	}
+}
+
+func (op Optional[T]) IsValid() bool {
+	return op.isValid
+}
+
+func (op Optional[T]) Value() T {
+	if !op.IsValid() {
+		log.Panicf("Can't get value of invalid optional!")
+	}
+
+	return op.value
 }
