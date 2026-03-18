@@ -21,6 +21,7 @@
       default = pkgs.mkShell {
         nativeBuildInputs = with pkgs; [
           go
+          golangci-lint
           libGL
           libX11
           libxrandr
