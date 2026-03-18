@@ -41,13 +41,24 @@ func (b Beat) Draw(parent *ebiten.Image, opt *ebiten.DrawImageOptions) {
 	// ebitenutil.DebugPrint(parent, fmt.Sprintf("%f %f", b.CurrentPos.X, b.CurrentPos.Y))
 }
 
-type BeatManager struct {
-	beats []*Beat
+type BeatConfig struct {
+	Image    *ebiten.Image
+	Start    Vec2
+	End      Vec2
+	LifeSpan time.Duration
 }
 
-func NewBeatManager() *BeatManager {
+type BeatManager struct {
+	beats           []*Beat
+	leftBeatConfig  BeatConfig
+	rightBeatConfig BeatConfig
+}
+
+func NewBeatManager(leftBeatConfig, rightBeatConfig BeatConfig) *BeatManager {
 	return &BeatManager{
-		beats: make([]*Beat, 0, 50),
+		beats:           make([]*Beat, 0, 50),
+		leftBeatConfig:  leftBeatConfig,
+		rightBeatConfig: rightBeatConfig,
 	}
 }
 
@@ -70,4 +81,16 @@ func (manager *BeatManager) Draw(parent *ebiten.Image, opt *ebiten.DrawImageOpti
 
 func (manager *BeatManager) AddBeat(beat *Beat) {
 	manager.beats = append(manager.beats, beat)
+}
+func (manager *BeatManager) AddBeatWithConfig(config BeatConfig) {
+	b := NewBeat(config.Image, config.Start, config.End, config.LifeSpan)
+	manager.AddBeat(b)
+}
+
+func (manager *BeatManager) AddLeftBeat() {
+	manager.AddBeatWithConfig(manager.leftBeatConfig)
+}
+
+func (manager *BeatManager) AddRightBeat() {
+	manager.AddBeatWithConfig(manager.rightBeatConfig)
 }

@@ -119,9 +119,25 @@ func main() {
 	debugManager.Add(NewDebugImage(leftBeatStart))
 	debugManager.Add(NewDebugImage(leftBeatEnd))
 
-	beatManager := NewBeatManager()
+	beatManager := NewBeatManager(
+		BeatConfig{
+			Image:    leftBeatImage,
+			Start:    leftBeatStart,
+			End:      leftBeatEnd,
+			LifeSpan: 3 * time.Second,
+		},
+		BeatConfig{
+			Image:    rightBeatImage,
+			Start:    rightBeatStart,
+			End:      rightBeatEnd,
+			LifeSpan: 3 * time.Second,
+		},
+	)
 	beatManager.AddBeat(leftBeat)
 	beatManager.AddBeat(rightBeat)
+
+	beatManager.AddRightBeat()
+	beatManager.AddRightBeat()
 
 	game := &Game{
 		leftPen:      leftPen,
