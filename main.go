@@ -16,6 +16,7 @@ type Game struct {
 	beatManager *BeatManager
 
 	debugManager *DebugImageManager
+	audioManager *AudioManager
 }
 
 func (g *Game) Update() error {
@@ -137,11 +138,14 @@ func main() {
 	beatManager.AddRightBeat()
 	beatManager.AddRightBeat()
 
+	audioManager := NewAudioManager(44100)
+
 	game := &Game{
 		leftPen:      leftPen,
 		rightPen:     rightPen,
 		beatManager:  beatManager,
 		debugManager: debugManager,
+		audioManager: audioManager,
 	}
 	if err := ebiten.RunGame(game); err != nil {
 		panic(err)

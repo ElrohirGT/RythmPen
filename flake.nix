@@ -18,7 +18,7 @@
     devShells = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
     in {
-      default = pkgs.mkShell {
+      default = pkgs.mkShell rec {
         nativeBuildInputs = with pkgs; [
           go
           golangci-lint
@@ -29,10 +29,14 @@
           libxinerama
           libxi
           libxxf86vm
+          alsa-lib.dev
         ];
 
+        LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath nativeBuildInputs;
+
         shellHook = ''
-          export LD_LIBRARY_PATH=${pkgs.wayland}/lib:${pkgs.lib.getLib pkgs.libGL}/lib:${pkgs.lib.getLib pkgs.libGL}/lib:$LD_LIBRARY_PATH
+               export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+          export PKG_CONFIG_PATH=${pkgs.alsa-lib.dev}/lib/pkgconfig:
         '';
       };
     });
