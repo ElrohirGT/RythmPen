@@ -1,4 +1,4 @@
-package main
+package rythmpen
 
 import "github.com/hajimehoshi/ebiten/v2"
 
