@@ -1,8 +1,11 @@
 package rythmpen
 
 import (
+	"bufio"
 	"fmt"
 	"io"
+	"log"
+	"strings"
 	"time"
 )
 
@@ -70,6 +73,64 @@ func (s *SongMap) BothBeat() {
 	})
 }
 
+func (s *SongMap) Beats() []SongBeat {
+	return s.beats
+}
+
+func SongMapReadFromFile(src io.Reader, audioManager AudioPositioner) *SongMap {
+	m := NewSongMap(audioManager)
+	rd := bufio.NewReader(src)
+	_, _ = rd.ReadString('\n') // Ignore first line
+
+	for {
+		line, err := rd.ReadString('\n')
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Panicf("%s:\nFailed to read line of file!\n", err)
+		}
+
+		parts := strings.Split(strings.TrimSpace(line), ",")
+		beatDuration, err := time.ParseDuration(parts[0])
+		if err != nil {
+			log.Panicf("%s:\nFailed to parse duration!\n", err)
+		}
+
+		var leftStatus PressStatus
+		switch parts[1] {
+		case "0":
+			leftStatus = PressStatusEnum.IGNORE
+		case "1":
+			leftStatus = PressStatusEnum.LIFTED
+		case "2":
+			leftStatus = PressStatusEnum.PRESSED
+		default:
+			log.Panicf("Can't parse left status! %s", parts[1])
+		}
+
+		var rightStatus PressStatus
+		switch parts[2] {
+		case "0":
+			rightStatus = PressStatusEnum.IGNORE
+		case "1":
+			rightStatus = PressStatusEnum.LIFTED
+		case "2":
+			rightStatus = PressStatusEnum.PRESSED
+		default:
+			log.Panicf("Can't parse left status! %s", parts[2])
+		}
+
+		m.beats = append(m.beats, SongBeat{
+			Position:  beatDuration,
+			LeftSide:  leftStatus,
+			RightSide: rightStatus,
+		})
+	}
+
+	return m
+}
+
 func (s *SongMap) WriteToFile(dst io.Writer) error {
 	_, err := io.WriteString(dst, "position,left,right\n")
 	if err != nil {
@@ -77,7 +138,7 @@ func (s *SongMap) WriteToFile(dst io.Writer) error {
 	}
 
 	for _, b := range s.beats {
-		_, err := fmt.Fprintf(dst, "%d,%d,%d\n", b.Position.Microseconds(), b.LeftSide, b.RightSide)
+		_, err := fmt.Fprintf(dst, "%dus,%d,%d\n", b.Position.Microseconds(), b.LeftSide, b.RightSide)
 		if err != nil {
 			return err
 		}

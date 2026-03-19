@@ -42,10 +42,9 @@ func (b Beat) Draw(parent *ebiten.Image, opt *ebiten.DrawImageOptions) {
 }
 
 type BeatConfig struct {
-	Image    *ebiten.Image
-	Start    Vec2
-	End      Vec2
-	LifeSpan time.Duration
+	Image          *ebiten.Image
+	PixelsPerMicro float64
+	End            Vec2
 }
 
 type BeatManager struct {
@@ -82,15 +81,19 @@ func (manager *BeatManager) Draw(parent *ebiten.Image, opt *ebiten.DrawImageOpti
 func (manager *BeatManager) AddBeat(beat *Beat) {
 	manager.beats = append(manager.beats, beat)
 }
-func (manager *BeatManager) AddBeatWithConfig(config BeatConfig) {
-	b := NewBeat(config.Image, config.Start, config.End, config.LifeSpan)
+func (manager *BeatManager) AddBeatWithConfig(config BeatConfig, startPos Vec2, lifeSpan time.Duration) {
+	b := NewBeat(config.Image, startPos, config.End, lifeSpan)
 	manager.AddBeat(b)
 }
 
-func (manager *BeatManager) AddLeftBeat() {
-	manager.AddBeatWithConfig(manager.leftBeatConfig)
+func (manager *BeatManager) AddLeftBeat(lifeSpan time.Duration) {
+	config := manager.leftBeatConfig
+	startPosX := config.End.X - config.PixelsPerMicro*float64(lifeSpan.Microseconds())
+	manager.AddBeatWithConfig(config, NewVec2(startPosX, config.End.Y), lifeSpan)
 }
 
-func (manager *BeatManager) AddRightBeat() {
-	manager.AddBeatWithConfig(manager.rightBeatConfig)
+func (manager *BeatManager) AddRightBeat(lifeSpan time.Duration) {
+	config := manager.rightBeatConfig
+	startPosX := config.End.X + config.PixelsPerMicro*float64(lifeSpan.Microseconds())
+	manager.AddBeatWithConfig(config, NewVec2(startPosX, config.End.Y), lifeSpan)
 }
