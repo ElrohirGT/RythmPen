@@ -15,6 +15,12 @@ go run ./cmd/player/ -audio "./songs/easy_Joyful, Фрози, Zachz Winner - Boo
 go run ./cmd/recorder/ -src <path to audio> -dst <path to map>
 ```
 
+## How to build for the web?
+
+```bash
+GOOS=js GOARCH=wasm go build ./cmd/itchio
+```
+
 ## Songs copyright
 
 ```
