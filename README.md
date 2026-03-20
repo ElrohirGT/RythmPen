@@ -2,6 +2,9 @@
 
 ## How to play?
 
+You can technically play it on [itchio](https://elrohirgt.itch.io/rythmpen). But
+I don't recommend it. For some reason the music doesn't work great there...
+
 ```bash
 # The command is: go run ./cmd/player/ -audio <path to audio> -map <path to map>
 go run ./cmd/player/ -audio "./songs/easy_Joyful, Фрози, Zachz Winner - Boogie [NCS Release].mp3" -map "./songs/easy_Joyful\,\ Фрози\,\ Zachz\ Winner\ -\ Boogie\ \[NCS\ Release\].map"
