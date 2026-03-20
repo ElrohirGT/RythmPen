@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"image/color"
 	"log"
 	"os"
@@ -10,6 +11,7 @@ import (
 	rythmpen "github.com/ElrohirGT/RythmPen"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/audio/mp3"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 var LeftColor = color.RGBA{R: 255, G: 0, B: 0, A: 255}
@@ -36,26 +38,37 @@ type Game struct {
 	debugManager *rythmpen.DebugImageManager
 	audioManager *rythmpen.AudioManager
 
-	songMap *rythmpen.SongMap
+	songMap       *rythmpen.SongMap
+	leftPenScore  *rythmpen.ScoreManager
+	rightPenScore *rythmpen.ScoreManager
 }
 
 func (g *Game) Update() error {
+	g.debugManager.Update()
+
+	g.beatManager.Update()
 	g.leftPen.Update()
 	g.rightPen.Update()
 
-	g.beatManager.Update()
-	g.debugManager.Update()
+	g.leftPenScore.Update()
+	g.rightPenScore.Update()
 
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
+	g.debugManager.Draw(screen, op)
+
 	g.leftPen.Draw(screen, op)
 	g.rightPen.Draw(screen, op)
 
 	g.beatManager.Draw(screen, op)
-	g.debugManager.Draw(screen, op)
+	g.leftPenScore.Draw(screen, op)
+	g.rightPenScore.Draw(screen, op)
+
+	score := g.leftPenScore.Score() + g.rightPenScore.Score()
+	ebitenutil.DebugPrint(screen, fmt.Sprintf("Score: %.2f", score))
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -181,13 +194,34 @@ func main() {
 		}
 	}
 
+	// TODO: This should be calibrated!
+	maxBeat := 50 * time.Microsecond
+	leftScoreManager := rythmpen.NewScoreManger(
+		audioManager,
+		songMap,
+		maxBeat,
+		5.0,
+		leftPen,
+		true,
+	)
+	rightScoreManager := rythmpen.NewScoreManger(
+		audioManager,
+		songMap,
+		maxBeat,
+		5.0,
+		rightPen,
+		false,
+	)
+
 	game := &Game{
-		leftPen:      leftPen,
-		rightPen:     rightPen,
-		beatManager:  beatManager,
-		debugManager: debugManager,
-		audioManager: audioManager,
-		songMap:      songMap,
+		leftPen:       leftPen,
+		rightPen:      rightPen,
+		beatManager:   beatManager,
+		debugManager:  debugManager,
+		audioManager:  audioManager,
+		songMap:       songMap,
+		leftPenScore:  leftScoreManager,
+		rightPenScore: rightScoreManager,
 	}
 	audioManager.Play()
 	if err := ebiten.RunGame(game); err != nil {
