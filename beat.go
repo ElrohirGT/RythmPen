@@ -70,7 +70,7 @@ func NewBeat(
 func (b *Beat) PluckWithPrecision(precision float64) {
 	b.IsPlucked = true
 	var preffix string
-	if precision >= 0.9 { // Excelent
+	if precision >= 0.8 { // Excellent
 		preffix = "PERFECT!"
 		b.Image = perfectBeatImage
 	} else if precision >= 0.5 { // Good
@@ -84,7 +84,7 @@ func (b *Beat) PluckWithPrecision(precision float64) {
 	log.Printf("%s: %.2f\n", preffix, precision)
 }
 
-func (b *Beat) FailedPluck() { // The pluck was failed
+func (b *Beat) FailedPluck() { // Failed to pluck the beat
 	log.Println("MISSED!")
 	b.IsPlucked = true
 	b.Image = failedBeatImage

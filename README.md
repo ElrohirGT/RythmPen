@@ -21,7 +21,7 @@ go run ./cmd/recorder/ -src <path to audio> -dst <path to map>
 ## How to build for the web?
 
 ```bash
-GOOS=js GOARCH=wasm go build ./cmd/itchio
+GOOS=js GOARCH=wasm go build -o ./cmd/itchio/build/game.wasm ./cmd/itchio && rm ./cmd/itchio/game.zip; zip -r ./cmd/itchio/game.zip ./cmd/itchio/build/
 ```
 
 ## Songs copyright
