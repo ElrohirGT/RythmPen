@@ -139,25 +139,28 @@ func main() {
 	debugManager.Add(rythmpen.NewDebugImage(leftBeatEnd))
 
 	// TODO: This should be calibrated!
-	maxBeat := 70 * time.Millisecond
+	maxBeatDelta := 70 * time.Millisecond
 
-	pixelsPerMicro := 0.5 / float64(time.Microsecond)
+	const SampleRate = 44100
+	audioManager := rythmpen.NewAudioManager(SampleRate)
+	pixelsPerMicro := 0.2 / float64(time.Microsecond)
 	beatManager := rythmpen.NewBeatManager(
-		maxBeat,
 		rythmpen.BeatConfig{
 			Image:          leftBeatImage,
 			End:            leftBeatEnd,
 			PixelsPerMicro: pixelsPerMicro,
+			Positioner:     audioManager,
+			MaxDelta:       maxBeatDelta,
 		},
 		rythmpen.BeatConfig{
 			Image:          rightBeatImage,
 			End:            rightBeatEnd,
 			PixelsPerMicro: pixelsPerMicro,
+			Positioner:     audioManager,
+			MaxDelta:       maxBeatDelta,
 		},
 	)
 
-	const SampleRate = 44100
-	audioManager := rythmpen.NewAudioManager(SampleRate)
 	audioSrc, err := os.Open(Params.AudioSrc)
 	if err != nil {
 		log.Panicf("%s\nFailed to create reader from file!\n", err)
@@ -205,7 +208,7 @@ func main() {
 		audioManager,
 		beatManager,
 		songMap,
-		maxBeat,
+		maxBeatDelta,
 		5.0,
 		leftPen,
 		rightPen,

@@ -35,7 +35,7 @@ func Float64Aproximately(a, b float64) bool {
 	return a-b <= math.SmallestNonzeroFloat64 || b-a <= math.SmallestNonzeroFloat64
 }
 
-func Float64Clamp(maximum, minimum, value float64) float64 {
+func Float64Clamp(minimum, maximum, value float64) float64 {
 	if value < minimum {
 		return minimum
 	}

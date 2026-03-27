@@ -17,23 +17,21 @@ var badBeatImage *ebiten.Image
 var goodBeatImage *ebiten.Image
 var perfectBeatImage *ebiten.Image
 
-// func init() {
-// 	failedBeatImage = ebiten.NewImage(50, 20)
-// 	grayRGB := 0
-//
-// 	failedBeatImage.Fill(color.RGBA{R: uint8(grayRGB), G: uint8(grayRGB), B: uint8(grayRGB), A: 255})
-// }
-
 type Beat struct {
-	Index      int
-	StartPos   Vec2
-	EndPos     Vec2
-	CurrentPos Vec2
-	Expiration time.Time
-	LifeSpan   time.Duration
-	Image      *ebiten.Image
-	Radians    float64
-	IsPlucked  bool
+	/* Rendering */
+
+	Index     int
+	Image     *ebiten.Image
+	IsPlucked bool
+
+	/* Movement */
+
+	StartPos     Vec2
+	EndPos       Vec2
+	CurrentPos   Vec2
+	Positioner   AudioPositioner
+	LifeSpan     time.Duration
+	MaxBeatDelta time.Duration
 }
 
 func NewBeat(
@@ -41,6 +39,8 @@ func NewBeat(
 	startPos, endPos Vec2,
 	lifeSpan time.Duration,
 	index int,
+	positioner AudioPositioner,
+	maxBeatDelta time.Duration,
 ) *Beat {
 	if failedBeatImage == nil {
 		failedBeatImage = ebiten.NewImage(image.Bounds().Dx(), image.Bounds().Dy())
@@ -57,18 +57,18 @@ func NewBeat(
 	}
 
 	return &Beat{
-		Index:      index,
-		StartPos:   startPos,
-		EndPos:     endPos,
-		LifeSpan:   lifeSpan,
-		Image:      image,
-		Expiration: time.Now().Add(lifeSpan),
+		Index:        index,
+		StartPos:     startPos,
+		EndPos:       endPos,
+		LifeSpan:     lifeSpan,
+		Image:        image,
+		Positioner:   positioner,
+		MaxBeatDelta: maxBeatDelta,
 	}
 }
 
 func (b *Beat) PluckWithPrecision(precision float64) {
 	b.IsPlucked = true
-	b.Expiration = b.Expiration.Add(1 * time.Second)
 	var preffix string
 	if precision >= 0.9 { // Excelent
 		preffix = "PERFECT!"
@@ -81,27 +81,26 @@ func (b *Beat) PluckWithPrecision(precision float64) {
 		b.Image = badBeatImage
 	}
 
-	log.Printf("%s: %f\n", preffix, precision)
+	log.Printf("%s: %.2f\n", preffix, precision)
 }
 
 func (b *Beat) FailedPluck() { // The pluck was failed
-	b.Expiration = b.Expiration.Add(1 * time.Second)
 	log.Println("MISSED!")
 	b.IsPlucked = true
 	b.Image = failedBeatImage
 }
 
 func (b *Beat) Update() bool {
+	currentPosition := b.Positioner.Position()
+	t := float64(currentPosition) / float64(b.LifeSpan)
 	if !b.IsPlucked {
-		t := 1 - float64(time.Until(b.Expiration).Microseconds())/float64(b.LifeSpan.Microseconds())
 		b.CurrentPos = Vec2Lerp(b.StartPos, b.EndPos, t)
 	}
-	return time.Until(b.Expiration).Microseconds() <= 0
+	return currentPosition > (b.LifeSpan + b.MaxBeatDelta)
 }
 
 func (b Beat) Draw(parent *ebiten.Image, opt *ebiten.DrawImageOptions) {
 	opt.GeoM.Translate(b.CurrentPos.X, b.CurrentPos.Y)
-	opt.GeoM.Rotate(b.Radians)
 	parent.DrawImage(b.Image, opt)
 
 	txtOpt := &text.DrawOptions{}
@@ -114,6 +113,8 @@ type BeatConfig struct {
 	Image          *ebiten.Image
 	PixelsPerMicro float64
 	End            Vec2
+	Positioner     AudioPositioner
+	MaxDelta       time.Duration
 }
 
 type BeatManager struct {
@@ -121,15 +122,13 @@ type BeatManager struct {
 	leftBeatConfig  BeatConfig
 	rightBeatConfig BeatConfig
 	currentIdx      int
-	maxDelta        time.Duration
 }
 
-func NewBeatManager(maxDelta time.Duration, leftBeatConfig, rightBeatConfig BeatConfig) *BeatManager {
+func NewBeatManager(leftBeatConfig, rightBeatConfig BeatConfig) *BeatManager {
 	return &BeatManager{
 		beats:           make([]*Beat, 0, 50),
 		leftBeatConfig:  leftBeatConfig,
 		rightBeatConfig: rightBeatConfig,
-		maxDelta:        maxDelta,
 	}
 }
 
@@ -162,20 +161,26 @@ func (manager *BeatManager) AddBeat(beat *Beat) {
 	manager.beats = append(manager.beats, beat)
 }
 func (manager *BeatManager) AddBeatWithConfig(config BeatConfig, startPos Vec2, lifeSpan time.Duration) {
-	b := NewBeat(config.Image, startPos, config.End, lifeSpan, len(manager.beats))
+	b := NewBeat(
+		config.Image,
+		startPos,
+		config.End,
+		lifeSpan,
+		len(manager.beats),
+		config.Positioner,
+		config.MaxDelta,
+	)
 	manager.AddBeat(b)
 }
 
 func (manager *BeatManager) AddLeftBeat(lifeSpan time.Duration) {
 	config := manager.leftBeatConfig
 	startPosX := config.End.X - config.PixelsPerMicro*float64(lifeSpan.Microseconds())
-	// config.End.X = config.End.X + config.PixelsPerMicro*float64(manager.maxDelta.Microseconds())
 	manager.AddBeatWithConfig(config, NewVec2(startPosX, config.End.Y), lifeSpan)
 }
 
 func (manager *BeatManager) AddRightBeat(lifeSpan time.Duration) {
 	config := manager.rightBeatConfig
 	startPosX := config.End.X + config.PixelsPerMicro*float64(lifeSpan.Microseconds())
-	// config.End.X = config.End.X - config.PixelsPerMicro*float64(manager.maxDelta.Microseconds())
 	manager.AddBeatWithConfig(config, NewVec2(startPosX, config.End.Y), lifeSpan)
 }

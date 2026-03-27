@@ -106,9 +106,16 @@ func (sm *ScoreManager) UpdateScore() {
 
 	sm.diff = math.Abs(float64(current.Position.Microseconds()) - float64(pos.Microseconds()))
 	scaledDifference := sm.diff / float64(sm.maxBeatDelta.Microseconds())
-	clampedDifference := Float64Clamp(1.0, 0.0, math.Abs(scaledDifference))
-	log.Println("Difference:", current.Position-pos, "Scaled:", scaledDifference, "Abs and Clamped:", clampedDifference)
+	clampedDifference := Float64Clamp(0, 1, math.Abs(scaledDifference))
 
 	sm.precision = 1.0 - clampedDifference
+	log.Printf(
+		"[DIFF: %2dms] \t 1 - clamp(0, 1, abs(abs(%d - %d) / %d)) = %.2f\n",
+		(current.Position - pos).Round(time.Millisecond).Milliseconds(),
+		current.Position.Microseconds(),
+		pos.Microseconds(),
+		sm.maxBeatDelta.Microseconds(),
+		sm.precision,
+	)
 	sm.currentScore += sm.beatPoints * sm.precision
 }
