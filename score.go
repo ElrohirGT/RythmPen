@@ -1,7 +1,7 @@
 package rythmpen
 
 import (
-	"fmt"
+	"log"
 	"math"
 	"time"
 
@@ -13,8 +13,10 @@ type ScoreManager struct {
 	positioner   AudioPositioner
 	scoreMap     *SongMap
 	currentIdx   int
+	beatManager  *BeatManager
 
-	targetPen *Pen
+	leftPen  *Pen
+	rightPen *Pen
 
 	maxBeatDelta     time.Duration
 	beatPoints       float64
@@ -22,27 +24,31 @@ type ScoreManager struct {
 	prevFramePressed bool
 
 	// Draw only
-	penPressed bool
-	diff       float64
-	precision  float64
+	anyPenIsPressed bool
+	diff            float64
+	precision       float64
 }
 
 func NewScoreManger(
 	audioManager AudioPositioner,
+	beatManager *BeatManager,
 	scoreMap *SongMap,
 	maxBeatDelta time.Duration,
 	beatPoints float64,
-	targetPen *Pen,
+	leftPen *Pen,
+	rightPen *Pen,
 	isLeft bool,
 ) *ScoreManager {
 	return &ScoreManager{
 		currentScore: 0,
+		beatManager:  beatManager,
 		positioner:   audioManager,
 		scoreMap:     scoreMap,
 		currentIdx:   0,
 		maxBeatDelta: maxBeatDelta,
 		beatPoints:   beatPoints,
-		targetPen:    targetPen,
+		leftPen:      leftPen,
+		rightPen:     rightPen,
 		isLeft:       isLeft,
 	}
 }
@@ -53,55 +59,45 @@ func (sm *ScoreManager) Score() float64 {
 
 func (sm *ScoreManager) Update() {
 	defer func() {
-		sm.prevFramePressed = sm.penPressed
+		sm.prevFramePressed = sm.anyPenIsPressed
 	}()
-	sm.penPressed = false
+	sm.anyPenIsPressed = false
 	if sm.currentIdx >= len(sm.scoreMap.beats) {
 		return
 	}
 	current := sm.scoreMap.beats[sm.currentIdx]
+	currentBeat := sm.beatManager.Beat(sm.currentIdx)
 
-	isLeft := current.LeftSide == PressStatusEnum.PRESSED
-	isRight := current.RightSide == PressStatusEnum.PRESSED
-	sm.penPressed = sm.targetPen.State == PenStateEnum.DOWN
+	isLeftBeat := current.LeftSide == PressStatusEnum.PRESSED
+	isRightBeat := current.RightSide == PressStatusEnum.PRESSED
+	isBothBeat := isLeftBeat && isRightBeat
 
-	shouldRegisterNewPress := sm.penPressed != sm.prevFramePressed
-	if shouldRegisterNewPress && sm.penPressed { // Only activate if we press it! NOT on release
-		if (isLeft && sm.isLeft && sm.penPressed) ||
-			(isRight && !sm.isLeft && sm.penPressed) {
-			fmt.Println("Pressed correct!")
+	leftPenIsPressed := sm.leftPen.State == PenStateEnum.DOWN
+	rightPenIsPressed := sm.rightPen.State == PenStateEnum.DOWN
+	bothPenPressed := leftPenIsPressed && rightPenIsPressed
+	sm.anyPenIsPressed = leftPenIsPressed || rightPenIsPressed
+
+	shouldRegisterNewPress := sm.anyPenIsPressed != sm.prevFramePressed
+	if shouldRegisterNewPress && sm.anyPenIsPressed { // Only activate if we press it! NOT on release
+		if (isBothBeat && bothPenPressed) ||
+			(isLeftBeat && leftPenIsPressed) ||
+			(isRightBeat && rightPenIsPressed) {
 			sm.UpdateScore()
+			currentBeat.PluckWithPrecision(sm.precision)
 			sm.currentIdx++
 			return
 		} else {
-			fmt.Println("Pressed INCORRECT!")
+			currentBeat.FailedPluck()
 		}
 	}
+	pos := sm.positioner.Position() - sm.maxBeatDelta
 	// We're already past the current beat so skip it.
-	pos := sm.positioner.Position() + sm.maxBeatDelta
 	if current.Position < pos {
 		sm.currentIdx++
 	}
 }
 
 func (sm *ScoreManager) Draw(parent *ebiten.Image, opt *ebiten.DrawImageOptions) {
-	// if sm.currentIdx >= len(sm.scoreMap.beats) {
-	// 	return
-	// }
-	//
-	// current := sm.scoreMap.beats[sm.currentIdx]
-	//
-	// ebitenutil.DebugPrint(parent, fmt.Sprintf(
-	// 	"Score: %.2f\nDiff: %.2f\nPrecision: %.2f\nPos: %.2f\nCurrent: %.2f\nPressed: %t\nLeft: %d, Rigth: %d",
-	// 	sm.currentScore,
-	// 	sm.diff,
-	// 	sm.precision,
-	// 	float64(sm.positioner.Position().Microseconds()),
-	// 	float64(current.Position.Microseconds()),
-	// 	sm.pressed,
-	// 	current.LeftSide,
-	// 	current.RightSide,
-	// ))
 }
 
 func (sm *ScoreManager) UpdateScore() {
@@ -109,6 +105,10 @@ func (sm *ScoreManager) UpdateScore() {
 	current := sm.scoreMap.beats[sm.currentIdx]
 
 	sm.diff = math.Abs(float64(current.Position.Microseconds()) - float64(pos.Microseconds()))
-	sm.precision = sm.diff / float64(sm.maxBeatDelta.Microseconds())
+	scaledDifference := sm.diff / float64(sm.maxBeatDelta.Microseconds())
+	clampedDifference := Float64Clamp(1.0, 0.0, math.Abs(scaledDifference))
+	log.Println("Difference:", current.Position-pos, "Scaled:", scaledDifference, "Abs and Clamped:", clampedDifference)
+
+	sm.precision = 1.0 - clampedDifference
 	sm.currentScore += sm.beatPoints * sm.precision
 }

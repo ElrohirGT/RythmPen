@@ -35,6 +35,18 @@ func Float64Aproximately(a, b float64) bool {
 	return a-b <= math.SmallestNonzeroFloat64 || b-a <= math.SmallestNonzeroFloat64
 }
 
+func Float64Clamp(maximum, minimum, value float64) float64 {
+	if value < minimum {
+		return minimum
+	}
+
+	if value > maximum {
+		return maximum
+	}
+
+	return value
+}
+
 func SlicesRemoveWithoutOrder[T any](slice []T, idx int) []T {
 	if len(slice) > 0 {
 		slice[idx] = slice[len(slice)-1]

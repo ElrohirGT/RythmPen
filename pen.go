@@ -1,6 +1,9 @@
 package rythmpen
 
-import "github.com/hajimehoshi/ebiten/v2"
+import (
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/text/v2"
+)
 
 type PenState int
 
@@ -41,11 +44,17 @@ func (p *Pen) Update() {
 }
 
 func (p Pen) Draw(parent *ebiten.Image, opt *ebiten.DrawImageOptions) {
+	x, y := p.DownPosition.X, p.DownPosition.Y
 	if p.State == PenStateEnum.UP {
-		opt.GeoM.Translate(p.UpPosition.X, p.UpPosition.Y)
-	} else {
-		opt.GeoM.Translate(p.DownPosition.X, p.DownPosition.Y)
+		x, y = p.UpPosition.X, p.UpPosition.Y
 	}
+	opt.GeoM.Translate(x, y)
 	parent.DrawImage(p.Image, opt)
+
+	txtOpt := &text.DrawOptions{}
+	txtOpt.GeoM.Translate(x, y)
+	key := p.ActivationKey.String()
+	text.Draw(parent, key, basicFace, txtOpt)
+
 	opt.GeoM.Reset()
 }
