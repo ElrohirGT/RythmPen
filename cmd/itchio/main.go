@@ -142,7 +142,7 @@ func main() {
 	debugManager.Add(rythmpen.NewDebugImage(leftBeatStart))
 	debugManager.Add(rythmpen.NewDebugImage(leftBeatEnd))
 
-	const SampleRate = 44100
+	const SampleRate = 48000
 	audioManager := rythmpen.NewAudioManager(SampleRate)
 	pixelsPerMicro := 0.2 / float64(time.Microsecond)
 	beatManager := rythmpen.NewBeatManager(
