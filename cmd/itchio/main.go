@@ -14,8 +14,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
-//go:embed easy.mp3
-//go:embed easy.map
+//go:embed song.mp3
+//go:embed song.map
 var f embed.FS
 
 var LeftColor = color.RGBA{R: 255, G: 0, B: 0, A: 255}
@@ -29,8 +29,8 @@ type Parameters struct {
 var Params Parameters
 
 func ParseParams() {
-	flag.StringVar(&Params.AudioSrc, "audio", "easy.mp3", "The path for the audio file")
-	flag.StringVar(&Params.MapSrc, "map", "easy.map", "The path for the map file")
+	flag.StringVar(&Params.AudioSrc, "audio", "song.mp3", "The path for the audio file")
+	flag.StringVar(&Params.MapSrc, "map", "song.map", "The path for the map file")
 	flag.Parse()
 }
 
@@ -42,9 +42,8 @@ type Game struct {
 	debugManager *rythmpen.DebugImageManager
 	audioManager *rythmpen.AudioManager
 
-	songMap       *rythmpen.SongMap
-	leftPenScore  *rythmpen.ScoreManager
-	rightPenScore *rythmpen.ScoreManager
+	songMap      *rythmpen.SongMap
+	scoreManager *rythmpen.ScoreManager
 }
 
 func (g *Game) Update() error {
@@ -54,8 +53,7 @@ func (g *Game) Update() error {
 	g.leftPen.Update()
 	g.rightPen.Update()
 
-	g.leftPenScore.Update()
-	g.rightPenScore.Update()
+	g.scoreManager.Update()
 
 	return nil
 }
@@ -68,10 +66,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	g.rightPen.Draw(screen, op)
 
 	g.beatManager.Draw(screen, op)
-	g.leftPenScore.Draw(screen, op)
-	g.rightPenScore.Draw(screen, op)
+	g.scoreManager.Draw(screen, op)
 
-	score := g.leftPenScore.Score() + g.rightPenScore.Score()
+	score := g.scoreManager.Score()
 	ebitenutil.DebugPrint(screen, fmt.Sprintf("Score: %.2f", score))
 }
 
@@ -145,22 +142,26 @@ func main() {
 	debugManager.Add(rythmpen.NewDebugImage(leftBeatStart))
 	debugManager.Add(rythmpen.NewDebugImage(leftBeatEnd))
 
-	pixelsPerMicro := 0.5 / float64(time.Microsecond)
+	const SampleRate = 44100
+	audioManager := rythmpen.NewAudioManager(SampleRate)
+	pixelsPerMicro := 0.2 / float64(time.Microsecond)
 	beatManager := rythmpen.NewBeatManager(
 		rythmpen.BeatConfig{
 			Image:          leftBeatImage,
 			End:            leftBeatEnd,
 			PixelsPerMicro: pixelsPerMicro,
+			Positioner:     audioManager,
+			MaxDelta:       rythmpen.DefaultMaxBeatDelta,
 		},
 		rythmpen.BeatConfig{
 			Image:          rightBeatImage,
 			End:            rightBeatEnd,
 			PixelsPerMicro: pixelsPerMicro,
+			Positioner:     audioManager,
+			MaxDelta:       rythmpen.DefaultMaxBeatDelta,
 		},
 	)
 
-	const SampleRate = 44100
-	audioManager := rythmpen.NewAudioManager(SampleRate)
 	audioSrc, err := f.Open(Params.AudioSrc)
 	if err != nil {
 		log.Panicf("%s\nFailed to create reader from file!\n", err)
@@ -183,6 +184,7 @@ func main() {
 	}
 
 	songMap := rythmpen.SongMapReadFromFile(mapSrc, audioManager)
+	songMapBeatCount := len(songMap.Beats())
 	for _, b := range songMap.Beats() {
 		lifeSpan := b.Position
 		log.Printf("Beat: %#v\n", b)
@@ -197,35 +199,31 @@ func main() {
 			beatManager.AddRightBeat(lifeSpan)
 		}
 	}
+	beatManagerBeatCount := len(beatManager.Beats())
+	fmt.Println("Added", beatManagerBeatCount, "beats")
+	if songMapBeatCount != beatManagerBeatCount {
+		log.Panicf("SongMap beats (%d) != (%d) BeatManager beats!\n", songMapBeatCount, beatManagerBeatCount)
+	}
 
-	// TODO: This should be calibrated!
-	maxBeat := 50 * time.Microsecond
-	leftScoreManager := rythmpen.NewScoreManger(
+	scoreManager := rythmpen.NewScoreManger(
 		audioManager,
+		beatManager,
 		songMap,
-		maxBeat,
+		rythmpen.DefaultMaxBeatDelta,
 		5.0,
 		leftPen,
-		true,
-	)
-	rightScoreManager := rythmpen.NewScoreManger(
-		audioManager,
-		songMap,
-		maxBeat,
-		5.0,
 		rightPen,
-		false,
+		true,
 	)
 
 	game := &Game{
-		leftPen:       leftPen,
-		rightPen:      rightPen,
-		beatManager:   beatManager,
-		debugManager:  debugManager,
-		audioManager:  audioManager,
-		songMap:       songMap,
-		leftPenScore:  leftScoreManager,
-		rightPenScore: rightScoreManager,
+		leftPen:      leftPen,
+		rightPen:     rightPen,
+		beatManager:  beatManager,
+		debugManager: debugManager,
+		audioManager: audioManager,
+		songMap:      songMap,
+		scoreManager: scoreManager,
 	}
 	audioManager.Play()
 	if err := ebiten.RunGame(game); err != nil {

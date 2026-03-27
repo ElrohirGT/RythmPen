@@ -25,7 +25,7 @@ type Parameters struct {
 var Params Parameters
 
 func ParseParams() {
-	flag.StringVar(&Params.AudioSrc, "audio", "source.mp3", "The path for the audio file")
+	flag.StringVar(&Params.AudioSrc, "audio", "song.mp3", "The path for the audio file")
 	flag.StringVar(&Params.MapSrc, "map", "song.map", "The path for the map file")
 	flag.Parse()
 }
@@ -138,9 +138,6 @@ func main() {
 	debugManager.Add(rythmpen.NewDebugImage(leftBeatStart))
 	debugManager.Add(rythmpen.NewDebugImage(leftBeatEnd))
 
-	// TODO: This should be calibrated!
-	maxBeatDelta := 70 * time.Millisecond
-
 	const SampleRate = 44100
 	audioManager := rythmpen.NewAudioManager(SampleRate)
 	pixelsPerMicro := 0.2 / float64(time.Microsecond)
@@ -150,14 +147,14 @@ func main() {
 			End:            leftBeatEnd,
 			PixelsPerMicro: pixelsPerMicro,
 			Positioner:     audioManager,
-			MaxDelta:       maxBeatDelta,
+			MaxDelta:       rythmpen.DefaultMaxBeatDelta,
 		},
 		rythmpen.BeatConfig{
 			Image:          rightBeatImage,
 			End:            rightBeatEnd,
 			PixelsPerMicro: pixelsPerMicro,
 			Positioner:     audioManager,
-			MaxDelta:       maxBeatDelta,
+			MaxDelta:       rythmpen.DefaultMaxBeatDelta,
 		},
 	)
 
@@ -208,7 +205,7 @@ func main() {
 		audioManager,
 		beatManager,
 		songMap,
-		maxBeatDelta,
+		rythmpen.DefaultMaxBeatDelta,
 		5.0,
 		leftPen,
 		rightPen,
