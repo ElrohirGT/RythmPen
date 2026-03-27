@@ -19,25 +19,35 @@
       pkgs = nixpkgsFor.${system};
     in {
       default = pkgs.mkShell rec {
-        nativeBuildInputs = with pkgs; [
-          go
-          golangci-lint
-          libGL
-          libX11
-          libxrandr
-          libxcursor
-          libxinerama
-          libxi
-          libxxf86vm
-          alsa-lib.dev
-        ];
+        nativeBuildInputs = with pkgs;
+          [
+            go
+            golangci-lint
+            libGL
+            libX11
+            libxrandr
+            libxcursor
+            libxinerama
+            libxi
+            libxxf86vm
+          ]
+          ++ (
+            if system == "x86_64-linux"
+            then [pkgs.alsa-lib.dev]
+            else []
+          );
 
         LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath nativeBuildInputs;
 
-        shellHook = ''
-          export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
-          export PKG_CONFIG_PATH=${pkgs.alsa-lib.dev}/lib/pkgconfig:
-        '';
+        shellHook =
+          ''
+            export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+          ''
+          + (
+            if system == "x86_64-linux"
+            then "export PKG_CONFIG_PATH=${pkgs.alsa-lib.dev}/lib/pkgconfig:$PKG_CONFIG_PATH"
+            else ""
+          );
       };
     });
   };
