@@ -7,7 +7,7 @@ I don't recommend it. For some reason the music doesn't work great there...
 
 ```bash
 # The command is: go run ./cmd/player/ -audio <path to audio> -map <path to map>
-go run ./cmd/player/ -audio "./songs/easy_Joyful, Фрози, Zachz Winner - Boogie [NCS Release].mp3" -map "./songs/easy_Joyful\,\ Фрози\,\ Zachz\ Winner\ -\ Boogie\ \[NCS\ Release\].map"
+go run ./cmd/player/ -audio "./songs/easy_Joyful, Фрози, Zachz Winner - Boogie [NCS Release].mp3" -map "./songs/easy_Joyful, Фрози, Zachz Winner - Boogie [NCS Release].map"
 ```
 
 ## How to generate a new map for a song?
