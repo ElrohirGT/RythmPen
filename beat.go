@@ -74,10 +74,10 @@ func (b *Beat) PluckWithPrecision(precision float64) {
 		preffix = "PERFECT!"
 		b.Image = perfectBeatImage
 	} else if precision >= 0.5 { // Good
-		preffix = "GOOD!"
+		preffix = "GOOD!   "
 		b.Image = goodBeatImage
 	} else { // Bad
-		preffix = "BAD!"
+		preffix = "BAD!    "
 		b.Image = badBeatImage
 	}
 
