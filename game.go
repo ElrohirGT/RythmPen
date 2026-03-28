@@ -79,7 +79,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		score := g.ScoreManager.Score()
 		txtOpt := &text.DrawOptions{}
 		txtOpt.GeoM.Translate(WindowWidth/2, WindowHeight/2)
-		text.Draw(screen, fmt.Sprintf("%.2f\nPress R to Restart", score), basicFace, txtOpt)
+		text.Draw(screen, fmt.Sprintf("%.2f", score), basicFace, txtOpt)
+		txtOpt.GeoM.Translate(0, 20)
+		text.Draw(screen, "Press R to Restart", basicFace, txtOpt)
 	}
 }
 
