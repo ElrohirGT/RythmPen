@@ -26,7 +26,7 @@ var Params Parameters
 func ParseParams() {
 	flag.StringVar(&Params.AudioSrc, "audio", "song.mp3", "The path for the audio file")
 	flag.StringVar(&Params.MapSrc, "map", "song.map", "The path for the map file")
-	flag.DurationVar(&Params.AudioDuration, "duration", 7*time.Second, "The duration of the provided song")
+	flag.DurationVar(&Params.AudioDuration, "duration", 30*time.Second, "The duration of the provided song")
 	flag.Parse()
 }
 
