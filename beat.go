@@ -132,6 +132,28 @@ func NewBeatManager(leftBeatConfig, rightBeatConfig BeatConfig) *BeatManager {
 	}
 }
 
+func (manager *BeatManager) Reset() {
+	manager.beats = manager.beats[:0]
+	manager.currentIdx = 0
+}
+
+func (manager *BeatManager) SpawnBeats(songMap *SongMap) {
+	for _, b := range songMap.Beats() {
+		lifeSpan := b.Position
+		log.Printf("Beat: %#v\n", b)
+
+		if b.LeftSide == PressStatusEnum.PRESSED {
+			log.Printf("Left!")
+			manager.AddLeftBeat(lifeSpan)
+		}
+
+		if b.RightSide == PressStatusEnum.PRESSED {
+			log.Printf("Right!")
+			manager.AddRightBeat(lifeSpan)
+		}
+	}
+}
+
 func (manager *BeatManager) Beat(idx int) *Beat {
 	return manager.beats[idx]
 }

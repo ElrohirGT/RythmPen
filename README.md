@@ -7,7 +7,14 @@ I don't recommend it. For some reason the music doesn't work great there...
 
 ```bash
 # The command is: go run ./cmd/player/ -audio <path to audio> -map <path to map>
-go run ./cmd/player/ -audio "./songs/easy_Joyful, Фрози, Zachz Winner - Boogie [NCS Release].mp3" -map "./songs/easy_Joyful, Фрози, Zachz Winner - Boogie [NCS Release].map"
+# Easy difficulty
+go run ./cmd/player/ -audio "./songs/easy_Joyful, Фрози, Zachz Winner - Boogie [NCS Release].mp3" -map "./songs/easy_Joyful, Фрози, Zachz Winner - Boogie [NCS Release].map" -duration 30s
+```
+
+```bash
+# The command is: go run ./cmd/player/ -audio <path to audio> -map <path to map>
+# Medium difficulty
+go run ./cmd/player/ -audio "./songs/medium_Willie Colon - Oh Qué Será_ (Letra Oficial).mp3" -map "./songs/medium_Willie Colon - Oh Qué Será_ (Letra Oficial).map" -duration 1m14s
 ```
 
 ## How to generate a new map for a song?

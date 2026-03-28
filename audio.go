@@ -2,6 +2,7 @@ package rythmpen
 
 import (
 	"io"
+	"log"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2/audio"
@@ -27,6 +28,12 @@ func (m *AudioManager) NewAudioPlayer(src io.Reader) error {
 	}
 
 	return nil
+}
+
+func (m *AudioManager) Reset() {
+	if err := m.player.Rewind(); err != nil {
+		log.Panicf("Failed to rewind song! %v\n", err)
+	}
 }
 
 func (m *AudioManager) Play() {

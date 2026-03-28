@@ -20,7 +20,6 @@ type ScoreManager struct {
 
 	maxBeatDelta     time.Duration
 	beatPoints       float64
-	isLeft           bool
 	prevFramePressed bool
 
 	// Draw only
@@ -37,7 +36,6 @@ func NewScoreManger(
 	beatPoints float64,
 	leftPen *Pen,
 	rightPen *Pen,
-	isLeft bool,
 ) *ScoreManager {
 	return &ScoreManager{
 		currentScore: 0,
@@ -49,8 +47,12 @@ func NewScoreManger(
 		beatPoints:   beatPoints,
 		leftPen:      leftPen,
 		rightPen:     rightPen,
-		isLeft:       isLeft,
 	}
+}
+
+func (sm *ScoreManager) Reset() {
+	sm.currentIdx = 0
+	sm.currentScore = 0
 }
 
 func (sm *ScoreManager) Score() float64 {
