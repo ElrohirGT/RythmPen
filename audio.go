@@ -40,6 +40,10 @@ func (m *AudioManager) Play() {
 	m.player.Play()
 }
 
+func (m *AudioManager) IsPlaying() bool {
+	return m.player.IsPlaying()
+}
+
 func (m *AudioManager) Position() time.Duration {
 	return m.player.Position()
 }

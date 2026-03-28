@@ -2,7 +2,6 @@ package rythmpen
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -28,7 +27,6 @@ type Game struct {
 
 	SongMap      *SongMap
 	ScoreManager *ScoreManager
-	SongDuration time.Duration
 }
 
 func (g *Game) Update() error {
@@ -40,7 +38,7 @@ func (g *Game) Update() error {
 		g.RightPen.Update()
 
 		g.ScoreManager.Update()
-		if g.AudioManager.Position() >= g.SongDuration {
+		if !g.AudioManager.IsPlaying() {
 			g.Screen = GameScreen_End
 		}
 	} else if g.Screen == GameScreen_End {
@@ -81,7 +79,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		score := g.ScoreManager.Score()
 		txtOpt := &text.DrawOptions{}
 		txtOpt.GeoM.Translate(WindowWidth/2, WindowHeight/2)
-		text.Draw(screen, fmt.Sprintf("%.2f", score), basicFace, txtOpt)
+		text.Draw(screen, fmt.Sprintf("%.2f\nPress R to Restart", score), basicFace, txtOpt)
 	}
 }
 

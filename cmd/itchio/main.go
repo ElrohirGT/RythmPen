@@ -20,9 +20,8 @@ var LeftColor = color.RGBA{R: 255, G: 0, B: 0, A: 255}
 var RightColor = color.RGBA{R: 0, G: 0, B: 255, A: 255}
 
 type Parameters struct {
-	AudioSrc      string
-	MapSrc        string
-	AudioDuration time.Duration
+	AudioSrc string
+	MapSrc   string
 }
 
 var Params Parameters
@@ -30,7 +29,6 @@ var Params Parameters
 func ParseParams() {
 	flag.StringVar(&Params.AudioSrc, "audio", "song.mp3", "The path for the audio file")
 	flag.StringVar(&Params.MapSrc, "map", "song.map", "The path for the map file")
-	flag.DurationVar(&Params.AudioDuration, "duration", 30*time.Second, "The duration of the provided song")
 	flag.Parse()
 }
 
@@ -111,7 +109,7 @@ func main() {
 		},
 	)
 
-	audioSrc, err := os.Open(Params.AudioSrc)
+	audioSrc, err := f.Open(Params.AudioSrc)
 	if err != nil {
 		log.Panicf("%s\nFailed to create reader from file!\n", err)
 	}
@@ -127,7 +125,7 @@ func main() {
 		log.Panicf("%s\nFailed to create audio player!\n", err)
 	}
 
-	mapSrc, err := os.Open(Params.MapSrc)
+	mapSrc, err := f.Open(Params.MapSrc)
 	if err != nil {
 		log.Panicf("%s\nFailed to read map source!\n", err)
 	}
@@ -153,7 +151,6 @@ func main() {
 		AudioManager: audioManager,
 		SongMap:      songMap,
 		ScoreManager: scoreManager,
-		SongDuration: Params.AudioDuration,
 	}
 	game.StartLevel()
 
