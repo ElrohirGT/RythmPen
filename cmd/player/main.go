@@ -86,8 +86,10 @@ func main() {
 
 	ebiten.SetWindowSize(int(WindowWidth), ComputeDiscreteHeight(WindowHeightWidthRatio, WindowWidth))
 	ebiten.SetWindowTitle("RythmPen")
+	const SampleRate = 48000
 
 	debugManager := rythmpen.NewDebugImageManager(ebiten.KeyB)
+	audioManager := rythmpen.NewAudioManager(SampleRate)
 
 	leftPenImg := ebiten.NewImage(50, 100)
 	leftPenImg.Fill(LeftColor)
@@ -138,8 +140,6 @@ func main() {
 	debugManager.Add(rythmpen.NewDebugImage(leftBeatStart))
 	debugManager.Add(rythmpen.NewDebugImage(leftBeatEnd))
 
-	const SampleRate = 44100
-	audioManager := rythmpen.NewAudioManager(SampleRate)
 	pixelsPerMicro := 0.2 / float64(time.Microsecond)
 	beatManager := rythmpen.NewBeatManager(
 		rythmpen.BeatConfig{

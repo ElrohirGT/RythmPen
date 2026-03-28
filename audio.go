@@ -30,11 +30,7 @@ func (m *AudioManager) NewAudioPlayer(src io.Reader) error {
 }
 
 func (m *AudioManager) Play() {
-	// if m.context.IsReady() {
 	m.player.Play()
-	// } else {
-	// 	log.Panic("Failed to play audio because context is not ready!")
-	// }
 }
 
 func (m *AudioManager) Position() time.Duration {
